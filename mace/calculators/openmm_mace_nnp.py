@@ -3,10 +3,11 @@ from typing import Tuple
 from e3nn.util import jit
 from mace.tools import utils, to_one_hot, atomic_numbers_to_indices
 from ase.units import kJ, mol
+from torch_nl import compute_neighborlist_n2
 
-torch.set_default_dtype(torch.float64)
 
-@torch.jit.script
+
+
 def simple_nl(positions: torch.Tensor, cutoff: float) -> Tuple[torch.Tensor, torch.Tensor]:
     
     N=positions.shape[0]
@@ -40,6 +41,8 @@ class MACE_openmm_NNP(torch.nn.Module):
         super().__init__()
 
         self.device = torch.device(device)
+        self.default_dtype=torch.float64
+        torch.set_default_dtype(self.default_dtype)
 
         self.register_buffer("ev_to_kj_mol", torch.tensor(mol / kJ, device=self.device))
 
@@ -95,17 +98,17 @@ class MACE_openmm_NNP(torch.nn.Module):
 
     def _update_mace_dict(self,positions):
 
-        #mapping, batch_mapping, shifts_idx = compute_neighborlist_n2(
-        #    cutoff=self.r_max,
-        #    pos=positions,
-        #    cell=self.mace_dict["cell"],
-        #    pbc=torch.tensor([False, False, False],device=self.device),
-        #    batch=self.mace_dict["batch"])
+        mapping, batch_mapping, shifts_idx = compute_neighborlist_n2(
+           cutoff=self.r_max,
+           pos=positions.to(dtype=self.default_dtype),
+           cell=self.mace_dict["cell"],
+           pbc=torch.tensor([False, False, False],device=self.device),
+           batch=self.mace_dict["batch"])
         
         
-        mapping, shifts_idx = simple_nl(positions, self.r_max)
-        mapping=mapping.to(self.device)
-        shifts_idx=shifts_idx.to(self.device)
+        # mapping, shifts_idx = simple_nl(positions, self.r_max)
+        # mapping=mapping.to(self.device)
+        # shifts_idx=shifts_idx.to(self.device)
 
         # assume no PBC in this implementation
 

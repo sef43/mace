@@ -1,0 +1,10 @@
+channels:
+  - conda-forge/label/openmm-torch_rc
+  - conda-forge/label/openmm_rc
+  - conda-forge
+dependencies:
+  - openmm=8
+  - openmm-torch=1.0
+  - openmmtools
+  - pytorch=1.12
+
